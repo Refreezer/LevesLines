@@ -1,9 +1,8 @@
-package math.graph.app;
+package com.company;
 
 
 import javax.swing.*;
 
-import java.awt.*;
 import java.util.HashMap;
 
 /***

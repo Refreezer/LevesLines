@@ -1,13 +1,10 @@
-package math.graph.app;
-
-import org.jfree.chart.ChartPanel;
+package com.company;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.Set;
 
 public class Jfrm extends JFrame {
