@@ -9,7 +9,13 @@ import java.util.Set;
 
 public class Jfrm extends JFrame {
 
-    public JTextField textField;
+    public JTextField textFieldForFunc;
+    public JTextField textFieldForGrad;
+    public JTextField textFieldForDer;
+    public JTextField xTextfield;
+    public JTextField yTextfield;
+
+
     private static volatile Jfrm instance;
 
     //TODO--split various strings to different collections for button generation
@@ -56,7 +62,7 @@ public class Jfrm extends JFrame {
      */
     public Jfrm() {
 
-        setTitle("Test.exe");
+        setTitle("App.exe");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 1280, 803);
 
@@ -77,24 +83,64 @@ public class Jfrm extends JFrame {
         lblUxY.setBounds(62, 13, 84, 25);
         mainCustomPanel.add(lblUxY);
 
-        textField = new JTextField();
-        textField.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        textField.setBounds(156, 15, 553, 21);
-        mainCustomPanel.add(textField);
-        textField.setColumns(10);
+        textFieldForFunc = new JTextField();
+        textFieldForFunc.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        textFieldForFunc.setBounds(156, 15, 553, 21);
+        mainCustomPanel.add(textFieldForFunc);
+        textFieldForFunc.setColumns(10);
 
 
-        //TODO -- correct strings encoding
+        JLabel labelGrad = new JLabel("Grad = ");
+        labelGrad.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        labelGrad.setBounds(900, 100, 84, 25);
+        mainCustomPanel.add(labelGrad);
+
+        textFieldForGrad = new JTextField();
+        textFieldForGrad.setEditable(false);
+        textFieldForGrad.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        textFieldForGrad.setBounds(1000, 100, 100, 21);
+        mainCustomPanel.add(textFieldForGrad);
+        textFieldForGrad.setColumns(10);
+
+        JLabel xyLabel = new JLabel("Input x, y -> ");
+        xyLabel.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        xyLabel.setBounds(900, 60, 84, 25);
+        mainCustomPanel.add(xyLabel);
+
+        yTextfield = new JTextField();
+        yTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        yTextfield.setBounds(1060, 60, 50, 21);
+        mainCustomPanel.add(yTextfield);
+        yTextfield.setColumns(10);
+
+        xTextfield = new JTextField();
+        xTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        xTextfield.setBounds(1000, 60, 50, 21);
+        mainCustomPanel.add(xTextfield);
+        xTextfield.setColumns(10);
+
+
         JButton startDrawbutton = new JButton("\u041D\u0430\u0440\u0438\u0441\u043E\u0432\u0430\u0442\u044C!");
         startDrawbutton.addActionListener(e -> {
-            String str = textField.getText().trim();
+            String str = textFieldForFunc.getText().trim();
+            //TODO -- текст на месте каретки
+
             if (str.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Empty input!");
             } else {
                 try {
-//                    CustomGraph.oneParamFuncBuildChart(str, -1, 1, 5000);
-                    CustomGraph.buildLevelLines(str);
-                    System.out.println("draw");
+
+                    String translatedFunction = CustomGraph.translation(str);
+                    CustomGraph.buildLevelLines(translatedFunction);
+                    System.out.println("processing draw for " + translatedFunction);
+
+                    if (!xTextfield.getText().isEmpty() && !yTextfield.getText().isEmpty()) {
+                        String gradResult = CustomGraph.gradEvaluate(translatedFunction,
+                                Double.parseDouble(xTextfield.getText()),
+                                Double.parseDouble(yTextfield.getText()));
+
+                        textFieldForGrad.setText(gradResult);
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Invalid input.\nAdd operations and\n parenthesis: " + str);
                 }
@@ -156,7 +202,7 @@ public class Jfrm extends JFrame {
         numsAndOpsPanel.addButton(new CustomJButton("|", 282, 183, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
         numsAndOpsPanel.addButton(new CustomJButton("^", 282, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
 
-        numsAndOpsPanel.addButton(new CustomJButton("C", 166, 149, e -> textField.setText(""), CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("C", 166, 149, e -> textFieldForFunc.setText(""), CustomJButton.ButtonMode.NUM_OR_OPS));
 
 
     }
@@ -164,9 +210,9 @@ public class Jfrm extends JFrame {
     private void btnClick(JButton source) {
         String str = source.getText();
         if (validInputs.contains(str)) {
-            textField.setText(textField.getText() + str);
+            textFieldForFunc.setText(textFieldForFunc.getText() + str);
         } else if (str.equals("C")) {
-            textField.setText("");
+            textFieldForFunc.setText("");
         }
     }
 }

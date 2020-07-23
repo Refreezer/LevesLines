@@ -49,8 +49,8 @@ public class CustomJButton extends  JButton{
 
     private void fillTextField(JButton source) {
         String str = source.getText();
-        String curInput = Jfrm.getInstance().textField.getText();
-        Jfrm.getInstance().textField.setText("" + curInput + str);
+        String curInput = Jfrm.getInstance().textFieldForFunc.getText();
+        Jfrm.getInstance().textFieldForFunc.setText("" + curInput + str);
 
 
     }
