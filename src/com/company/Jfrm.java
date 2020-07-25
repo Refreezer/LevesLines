@@ -14,6 +14,8 @@ public class Jfrm extends JFrame {
     public JTextField textFieldForDer;
     public JTextField xTextfield;
     public JTextField yTextfield;
+    public JTextField xDirTextfield;
+    public JTextField yDirTextfield;
 
 
     private static volatile Jfrm instance;
@@ -120,32 +122,39 @@ public class Jfrm extends JFrame {
         xTextfield.setColumns(10);
 
 
+        JLabel dirLable = new JLabel("Input dir -> ");
+        dirLable.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        dirLable.setBounds(880, 140, 84, 25);
+        mainCustomPanel.add(dirLable);
+
+
+        xDirTextfield = new JTextField();
+        xDirTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        xDirTextfield.setBounds(1000, 140, 50, 21);
+        mainCustomPanel.add(xDirTextfield);
+        xDirTextfield.setColumns(10);
+
+        yDirTextfield = new JTextField();
+        yDirTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        yDirTextfield.setBounds(1060, 140, 50, 21);
+        mainCustomPanel.add(yDirTextfield);
+        yDirTextfield.setColumns(10);
+
+
+        JLabel labelDirDeriv = new JLabel("Derivative for this dir = ");
+        labelDirDeriv.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        labelDirDeriv.setBounds(800, 180, 184, 25);
+        mainCustomPanel.add(labelDirDeriv);
+
+        textFieldForDer = new JTextField();
+        textFieldForDer.setEditable(false);
+        textFieldForDer.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        textFieldForDer.setBounds(1000, 180, 100, 21);
+        mainCustomPanel.add(textFieldForDer);
+        textFieldForDer.setColumns(10);
+
         JButton startDrawbutton = new JButton("\u041D\u0430\u0440\u0438\u0441\u043E\u0432\u0430\u0442\u044C!");
-        startDrawbutton.addActionListener(e -> {
-            String str = textFieldForFunc.getText().trim();
-            //TODO -- текст на месте каретки
-
-            if (str.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Empty input!");
-            } else {
-                try {
-
-                    String translatedFunction = CustomGraph.translation(str);
-                    CustomGraph.buildLevelLines(translatedFunction);
-                    System.out.println("processing draw for " + translatedFunction);
-
-                    if (!xTextfield.getText().isEmpty() && !yTextfield.getText().isEmpty()) {
-                        String gradResult = CustomGraph.gradEvaluate(translatedFunction,
-                                Double.parseDouble(xTextfield.getText()),
-                                Double.parseDouble(yTextfield.getText()));
-
-                        textFieldForGrad.setText(gradResult);
-                    }
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Invalid input.\nAdd operations and\n parenthesis: " + str);
-                }
-            }
-        });
+        startDrawbutton.addActionListener(e -> textFieldListener());
         startDrawbutton.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         startDrawbutton.setBounds(719, 12, 145, 23);
         mainCustomPanel.add(startDrawbutton);
@@ -167,7 +176,7 @@ public class Jfrm extends JFrame {
 
 
         //TODO -- temporary decision to set buttons manually
-        ActionListener defaultListener = e -> btnClick((JButton) e.getSource());
+        ActionListener defaultListener = e -> fillWithBtnText((JButton) e.getSource());
         funcPanel.addButton(new CustomJButton("sin(x)", 10, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("cos(x)", 110, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("tan(x)", 210, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
@@ -207,12 +216,51 @@ public class Jfrm extends JFrame {
 
     }
 
-    private void btnClick(JButton source) {
-        String str = source.getText();
-        if (validInputs.contains(str)) {
-            textFieldForFunc.setText(textFieldForFunc.getText() + str);
-        } else if (str.equals("C")) {
-            textFieldForFunc.setText("");
+    private void fillWithBtnText(JButton source) {
+        String strFromButton = source.getText();
+        StringBuilder strFromTextField = new StringBuilder(textFieldForFunc.getText());
+
+        if (validInputs.contains(strFromButton)) {
+            int caretPos = textFieldForFunc.getCaret().getDot();
+            strFromTextField.ensureCapacity(strFromTextField.length() + strFromButton.length());
+            strFromTextField.insert(caretPos, strFromButton);
+            textFieldForFunc.setText(strFromTextField.toString());
+
+
+        }
+    }
+
+    private void textFieldListener() {
+        String str = textFieldForFunc.getText().trim();
+
+
+        if (str.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Empty input!");
+        } else {
+            try {
+
+                String translatedFunction = CustomGraph.translation(str);
+                CustomGraph.buildLevelLines(translatedFunction);
+                System.out.println("processing draw for " + translatedFunction);
+
+                if (!xTextfield.getText().isEmpty() && !yTextfield.getText().isEmpty()) {
+                    String gradResult = CustomGraph.grad(translatedFunction,
+                            Double.parseDouble(xTextfield.getText()),
+                            Double.parseDouble(yTextfield.getText()));
+
+                    textFieldForGrad.setText(gradResult);
+                    if (!xDirTextfield.getText().isEmpty() && !yDirTextfield.getText().isEmpty()) {
+                        String dirDeriative = CustomGraph.evaluateDirDerivative(translatedFunction,
+                                Double.parseDouble(xTextfield.getText()),
+                                Double.parseDouble(yTextfield.getText()),
+                                Double.parseDouble(xDirTextfield.getText()),
+                                Double.parseDouble(yDirTextfield.getText())).toString();
+                        textFieldForDer.setText(dirDeriative);
+                    }
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Invalid input.\nAdd operations and\n parenthesis: " + str);
+            }
         }
     }
 }

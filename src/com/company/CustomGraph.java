@@ -24,48 +24,12 @@ public class CustomGraph {
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
         String funcTrans = in.readLine();
-//        System.out.println("Method: translation " + funcTrans);
         if (funcTrans.contains("Traceback"))
             return Arrays.deepToString(in.lines().toArray());
         return funcTrans;
     }
 
-    public static JFreeChart oneParamFuncBuildChart(String func,
-                                                    float xStart, float xStop, int xSteps) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\plot.py",
-                func, Float.toString(xStart), Float.toString(xStop), Float.toString(xSteps));
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-        XYSeries series = new XYSeries("func");
-        for (int i = 0; i < xSteps; i++) {
-            try {
-                float y = Float.parseFloat(in.readLine());
-                series.add(xStart + ((xStop - xStart) / xSteps) * i, y);
-                series.add(xStart + ((xStop - xStart) / xSteps) * i, -y);
-                System.out.println(xStart + ((xStop - xStart) / xSteps) * i + " " + y);
-            } catch (NumberFormatException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-
-
-        XYDataset dataset = new XYSeriesCollection(series);
-        JFreeChart chart = ChartFactory.createXYLineChart("y = " + func, "X", "Y",
-                dataset, PlotOrientation.VERTICAL, true, true, true);
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setBounds(100, 100, 1000, 800);
-        JFrame frame =
-                new JFrame("MinimalStaticChart");
-        // Помещаем график на фрейм
-        frame.getContentPane()
-                .add(new ChartPanel(chart));
-        frame.setSize(800, 800);
-        frame.setVisible(true);
-
-        return chart;
-    }
 
     public static String buildLevelLines(String func) throws IOException {
 
@@ -96,7 +60,7 @@ public class CustomGraph {
     }
 
 
-    public static String gradEvaluate(String func, Double x, Double y) throws IOException {
+    public static String grad(String func, Double x, Double y) throws IOException {
 
         String xDerivative = partialDerivative(func, "x", "y");
         String yDerivative = partialDerivative(func, "y", "x");
@@ -115,6 +79,30 @@ public class CustomGraph {
         return "{" +  round(xDerivativeValue, 3) + ";" + round(yDerivativeValue, 3) + "}";
 
     }
+    public static Double evaluateDirDerivative(String func, Double x, Double y, Double xDir, Double yDir ) throws IOException {
+        String xDerivative = partialDerivative(func, "x", "y");
+        String yDerivative = partialDerivative(func, "y", "x");
+
+        System.out.println("xDer :" + xDerivative);
+        System.out.println("yDer :" + yDerivative);
+
+        double xDerivativeValue =0.;
+        double yDerivativeValue = 0.;
+        try {
+            xDerivativeValue = evaluate(xDerivative, x.toString(), y.toString());
+            yDerivativeValue = evaluate(yDerivative, y.toString(), x.toString());
+        } catch (Exception e) {
+            System.out.println("CustomGraph.evaluateDirDerivative :" + e.getMessage());
+        }
+        double xDirVec = xDir - x;
+        double yDirVec = yDir - y;
+        double dirLength = Math.sqrt(xDirVec * xDirVec + yDirVec * yDirVec);
+        double alpha =  xDir/dirLength, beta = yDir/dirLength;
+
+        return round( xDerivativeValue * alpha + beta * yDerivativeValue, 2);
+
+    }
+
     private static Double round (double a, int scale) {
         a *=  Math.pow(10, scale);
         a = Math.floor(a);
@@ -139,6 +127,7 @@ public class CustomGraph {
             return 0;
         }
     }
+
 
     private static String partialDerivative(String func, String paramToDiff, String param2) throws IOException {
         try {
@@ -172,7 +161,7 @@ public class CustomGraph {
 
     }
 
-    //TODO -- производная по направлению
+
     //TODO -- отображение на графике
 
     public static void main(String[] args) throws IOException {
