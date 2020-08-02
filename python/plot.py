@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from math import *
 
 func = sys.argv[1]
 
