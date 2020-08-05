@@ -5,12 +5,11 @@ import javax.swing.*;
 
 import java.util.HashMap;
 
-/***
- * Дополняет класс Jpanel, упрощая доступ к кнопкам на панели
- */
 
+//Дополняет класс Jpanel, упрощая доступ к кнопкам на панели
 public class CustomJPanel extends JPanel{
 
+    //создаём словарь типа "строка - кнопка"
     private HashMap<String, CustomJButton> attachedButtons;
 
 
@@ -26,8 +25,5 @@ public class CustomJPanel extends JPanel{
         add(newButton);
         attachedButtons.put(newButton.getText(), newButton);
     }
-
-    //TODO -- auto ButtonAdding
-
 
 }

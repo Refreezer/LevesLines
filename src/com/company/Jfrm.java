@@ -5,7 +5,10 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Jfrm extends JFrame {
 
@@ -17,36 +20,15 @@ public class Jfrm extends JFrame {
     public JTextField xDirTextfield;
     public JTextField yDirTextfield;
 
-
-    private static volatile Jfrm instance;
-
-    //TODO--split various strings to different collections for button generation
+    //Создаём набор строк для кнопок
     private final Set<String> validInputs = Set.of(
             "9", "8", "7", "6", "5", "4", "3", "2", "1", "0",
-            ".", "(", ")", "+", "-", "/", "*", "x^y", "|",
+            ".", "(", ")", "+", "-", "/", "*", "abs()", "x", "y",
             "sin(x)", "cos(x)", "tan(x)", "ctg(x)", "asin(x)",
             "acos(x)", "atan(x)", "actg(x)", "log(a, b)",
-            "sqrt(x)", "^");
+            "sqrt(x)", "^", "pi", "e");
 
-    //TODO -- add json-like net grid for buttons (maybe xml)
-
-    //Singleton
-    public static Jfrm getInstance() {
-        Jfrm localInstance = instance;
-        if (localInstance == null) {
-            synchronized (Jfrm.class) {
-                localInstance = instance;
-                if (localInstance == null) {
-                    instance = localInstance = new Jfrm();
-                }
-            }
-        }
-        return localInstance;
-    }
-
-    /**
-     * Launch the application.
-     */
+    //запуск приложения
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -58,15 +40,14 @@ public class Jfrm extends JFrame {
         });
     }
 
-
-    /**
-     * Create the frame.
-     */
+    //настройка окна
     public Jfrm() {
 
-        setTitle("App.exe");
+        setTitle("Скалярное поле.экзе");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 1280, 803);
+        setBounds(100, 100, 1280, 400);
+        //отключаем изменяемость размера окна
+        setResizable(false);
 
         JPanel contentPanel = new JPanel();
         contentPanel.setForeground(Color.WHITE);
@@ -74,109 +55,124 @@ public class Jfrm extends JFrame {
         setContentPane(contentPanel);
         contentPanel.setLayout(null);
 
-        CustomJPanel mainCustomPanel = new CustomJPanel(10, 469, 1244, 285);
+        //панель со всем интерфейсом
+        CustomJPanel mainCustomPanel = new CustomJPanel(10, 10, 1244, 343);
         mainCustomPanel.setBackground(Color.LIGHT_GRAY);
         mainCustomPanel.setBorder(new LineBorder(Color.GRAY, 3, true));
         contentPanel.add(mainCustomPanel);
 
-
+        //надпись U(x, y) =
         JLabel lblUxY = new JLabel("U(x, y) = ");
         lblUxY.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         lblUxY.setBounds(62, 13, 84, 25);
         mainCustomPanel.add(lblUxY);
 
+        //текстовое поле для ввода функции
         textFieldForFunc = new JTextField();
         textFieldForFunc.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         textFieldForFunc.setBounds(156, 15, 553, 21);
         mainCustomPanel.add(textFieldForFunc);
         textFieldForFunc.setColumns(10);
 
-
-        JLabel labelGrad = new JLabel("Grad = ");
+        //снова надпись
+        JLabel labelGrad = new JLabel("Градиент в точке = ");
         labelGrad.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        labelGrad.setBounds(900, 100, 84, 25);
+        labelGrad.setBounds(840, 140, 180, 25);
         mainCustomPanel.add(labelGrad);
 
+        //поле для вывода градиента
         textFieldForGrad = new JTextField();
+        //запрещаем редактировать содержимое поля
         textFieldForGrad.setEditable(false);
         textFieldForGrad.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        textFieldForGrad.setBounds(1000, 100, 100, 21);
+        textFieldForGrad.setBounds(1010, 140, 115, 21);
         mainCustomPanel.add(textFieldForGrad);
         textFieldForGrad.setColumns(10);
 
-        JLabel xyLabel = new JLabel("Input x, y -> ");
+        //ещё одна надпись
+        JLabel xyLabel = new JLabel("Введите х и у точки М: ");
         xyLabel.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        xyLabel.setBounds(900, 60, 84, 25);
+        xyLabel.setBounds(840, 55, 200, 25);
         mainCustomPanel.add(xyLabel);
 
-        yTextfield = new JTextField();
-        yTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        yTextfield.setBounds(1060, 60, 50, 21);
-        mainCustomPanel.add(yTextfield);
-        yTextfield.setColumns(10);
-
+        //поле для ввода х
         xTextfield = new JTextField();
         xTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        xTextfield.setBounds(1000, 60, 50, 21);
+        xTextfield.setBounds(1050, 60, 50, 21);
         mainCustomPanel.add(xTextfield);
         xTextfield.setColumns(10);
 
+        //поле для ввода y
+        yTextfield = new JTextField();
+        yTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
+        yTextfield.setBounds(1110, 60, 50, 21);
+        mainCustomPanel.add(yTextfield);
+        yTextfield.setColumns(10);
 
-        JLabel dirLable = new JLabel("Input dir -> ");
+        //и ещё одна надпись
+        JLabel dirLable = new JLabel("Направление к точке М1: ");
         dirLable.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        dirLable.setBounds(880, 140, 84, 25);
+        dirLable.setBounds(840, 100, 250, 25);
         mainCustomPanel.add(dirLable);
 
-
+        //координата х точки направления
         xDirTextfield = new JTextField();
         xDirTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        xDirTextfield.setBounds(1000, 140, 50, 21);
+        xDirTextfield.setBounds(1050, 100, 50, 21);
         mainCustomPanel.add(xDirTextfield);
         xDirTextfield.setColumns(10);
 
+        //координата у точки направления
         yDirTextfield = new JTextField();
         yDirTextfield.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        yDirTextfield.setBounds(1060, 140, 50, 21);
+        yDirTextfield.setBounds(1110, 100, 50, 21);
         mainCustomPanel.add(yDirTextfield);
         yDirTextfield.setColumns(10);
 
-
-        JLabel labelDirDeriv = new JLabel("Derivative for this dir = ");
+        //очередная надпись
+        JLabel labelDirDeriv = new JLabel("Производная по направлению = ");
         labelDirDeriv.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        labelDirDeriv.setBounds(800, 180, 184, 25);
+        labelDirDeriv.setBounds(840, 180, 260, 25);
         mainCustomPanel.add(labelDirDeriv);
 
+        //поле для вывода посчитанной производной
         textFieldForDer = new JTextField();
+        //поле не изменяется пользователем
         textFieldForDer.setEditable(false);
         textFieldForDer.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
-        textFieldForDer.setBounds(1000, 180, 100, 21);
+        textFieldForDer.setBounds(1100, 180, 100, 21);
         mainCustomPanel.add(textFieldForDer);
         textFieldForDer.setColumns(10);
 
-        JButton startDrawbutton = new JButton("\u041D\u0430\u0440\u0438\u0441\u043E\u0432\u0430\u0442\u044C!");
+        //настройка кнопки Нарисовать
+        JButton startDrawbutton = new JButton("Нарисовать!");
         startDrawbutton.addActionListener(e -> textFieldListener());
         startDrawbutton.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         startDrawbutton.setBounds(719, 12, 145, 23);
         mainCustomPanel.add(startDrawbutton);
 
-        CustomJPanel funcPanel = new CustomJPanel(10, 47, 421, 227);
+        //панелька с кнопками-функциями
+        CustomJPanel funcPanel = new CustomJPanel(10, 47, 421, 284);
         funcPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
         mainCustomPanel.add(funcPanel);
         funcPanel.setLayout(null);
 
-        JLabel label = new JLabel("\u041D\u0435\u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438");
+        //надпись
+        JLabel label = new JLabel("Некоторые функции");
         label.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         label.setBounds(10, 11, 220, 19);
         funcPanel.add(label);
 
+        //панелька с цифрами и мат. операциями
         CustomJPanel numsAndOpsPanel = new CustomJPanel(441, 47, 360, 227);
         numsAndOpsPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
-        numsAndOpsPanel.setBounds(441, 47, 360, 227);
+        numsAndOpsPanel.setBounds(441, 47, 360, 284);
         mainCustomPanel.add(numsAndOpsPanel);
 
-
-        //TODO -- temporary decision to set buttons manually
+        //слушатель, установленный для всех кнопок, кроме "Нарисовать"
         ActionListener defaultListener = e -> fillWithBtnText((JButton) e.getSource());
+
+        //Добавляем все кнопки к панели функций
         funcPanel.addButton(new CustomJButton("sin(x)", 10, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("cos(x)", 110, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("tan(x)", 210, 41, defaultListener, CustomJButton.ButtonMode.FUNC));
@@ -184,82 +180,117 @@ public class Jfrm extends JFrame {
         funcPanel.addButton(new CustomJButton("asin(x)", 10, 75, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("acos(x)", 110, 75, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("atan(x)", 210, 75, defaultListener, CustomJButton.ButtonMode.FUNC));
-        funcPanel.addButton(new CustomJButton("actg(x)", 310, 76, defaultListener, CustomJButton.ButtonMode.FUNC));
+        funcPanel.addButton(new CustomJButton("actg(x)", 310, 75, defaultListener, CustomJButton.ButtonMode.FUNC));
         funcPanel.addButton(new CustomJButton("log(a, b)", 10, 109, defaultListener, CustomJButton.ButtonMode.FUNC));
-        funcPanel.addButton(new CustomJButton("sqrt(x)", 124, 109, defaultListener, CustomJButton.ButtonMode.FUNC));
+        funcPanel.addButton(new CustomJButton("sqrt(x)", 110, 109, defaultListener, CustomJButton.ButtonMode.FUNC));
+        funcPanel.addButton(new CustomJButton("pi", 210, 109, defaultListener, CustomJButton.ButtonMode.FUNC));
+        funcPanel.addButton(new CustomJButton("e", 310, 109, defaultListener, CustomJButton.ButtonMode.FUNC));
 
-
+        //Добавляем все кнопки к панели цифр и мат. операций
         numsAndOpsPanel.addButton(new CustomJButton("7", 10, 11, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("8", 88, 13, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("9", 166, 13, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("8", 88, 11, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("9", 166, 11, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
         numsAndOpsPanel.addButton(new CustomJButton("4", 10, 45, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("5", 88, 47, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("6", 166, 47, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("3", 166, 81, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("2", 88, 81, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("5", 88, 45, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("6", 166, 45, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("3", 166, 79, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("2", 88, 79, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
         numsAndOpsPanel.addButton(new CustomJButton("1", 10, 79, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("0", 10, 113, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("0", 88, 113, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
 
-        numsAndOpsPanel.addButton(new CustomJButton(".", 282, 115, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("+", 282, 13, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton(".", 282, 181, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("+", 282, 11, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
         numsAndOpsPanel.addButton(new CustomJButton("-", 282, 45, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("*", 282, 81, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("/", 282, 115, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("*", 282, 79, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("/", 282, 113, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
 
-        numsAndOpsPanel.addButton(new CustomJButton("(", 10, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton(")", 88, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("|", 282, 183, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
-        numsAndOpsPanel.addButton(new CustomJButton("^", 282, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("(", 10, 113, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton(")", 166, 113, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("abs()", 282, 215, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("^", 282, 147, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("x", 10, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
+        numsAndOpsPanel.addButton(new CustomJButton("y", 88, 149, defaultListener, CustomJButton.ButtonMode.NUM_OR_OPS));
 
         numsAndOpsPanel.addButton(new CustomJButton("C", 166, 149, e -> textFieldForFunc.setText(""), CustomJButton.ButtonMode.NUM_OR_OPS));
-
-
     }
 
+    //метод заполнения текстового поля функции нажатием кнопок
     private void fillWithBtnText(JButton source) {
+
+        //получаем текст с кнопки
         String strFromButton = source.getText();
+        //StringBuilder создаёт расширяемую строку
+        //помещаем в strFromTextField текст с кнопки
         StringBuilder strFromTextField = new StringBuilder(textFieldForFunc.getText());
 
+        //если текст удовлетворяет 
         if (validInputs.contains(strFromButton)) {
             int caretPos = textFieldForFunc.getCaret().getDot();
             strFromTextField.ensureCapacity(strFromTextField.length() + strFromButton.length());
             strFromTextField.insert(caretPos, strFromButton);
             textFieldForFunc.setText(strFromTextField.toString());
-
-
         }
     }
 
     private void textFieldListener() {
+        //удаляем начальные и конечные пробелы
         String str = textFieldForFunc.getText().trim();
 
-
+        //если строка пустая
         if (str.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Empty input!");
+            JOptionPane.showMessageDialog(null, "Пустой ввод!");
         } else {
             try {
-
                 String translatedFunction = CustomGraph.translation(str);
-                CustomGraph.buildLevelLines(translatedFunction);
-                System.out.println("processing draw for " + translatedFunction);
-
+                //если пользователь задал точку  градиента,
+                //то считаем градиент
                 if (!xTextfield.getText().isEmpty() && !yTextfield.getText().isEmpty()) {
                     String gradResult = CustomGraph.grad(translatedFunction,
                             Double.parseDouble(xTextfield.getText()),
                             Double.parseDouble(yTextfield.getText()));
-
+                    //печатаем градиент
                     textFieldForGrad.setText(gradResult);
+
+                    //если задано направление - считаем производную
                     if (!xDirTextfield.getText().isEmpty() && !yDirTextfield.getText().isEmpty()) {
+
                         String dirDeriative = CustomGraph.evaluateDirDerivative(translatedFunction,
                                 Double.parseDouble(xTextfield.getText()),
                                 Double.parseDouble(yTextfield.getText()),
                                 Double.parseDouble(xDirTextfield.getText()),
                                 Double.parseDouble(yDirTextfield.getText())).toString();
+                        //печатаем производную по направлению
                         textFieldForDer.setText(dirDeriative);
+                        //строим линии уровня
+                        CustomGraph.buildLevelLines(translatedFunction,
+                                Double.parseDouble(xTextfield.getText()),
+                                Double.parseDouble(yTextfield.getText()),
+                                Double.parseDouble(xDirTextfield.getText()),
+                                Double.parseDouble(yDirTextfield.getText()));
+                    } else {
+                        //если не задано направление,
+                        //то строим график
+                        CustomGraph.buildLevelLines(translatedFunction);
                     }
+                } else {
+                    //если задана только функция
+                    CustomGraph.buildLevelLines(translatedFunction);
                 }
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(null, ex.getLocalizedMessage());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Invalid input.\nAdd operations and\n parenthesis: " + str);
+
+                List<String> arr = Arrays.stream(ex.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList());
+                StringBuilder msg = new StringBuilder();
+                for (String el :
+                        arr) {
+                    msg.append(el).append("\n");
+                }
+                JOptionPane.showMessageDialog(
+                        null, "Invalid input.\nAdd operations and\n parenthesis: " + str + msg
+                 );
+
+
             }
         }
     }
