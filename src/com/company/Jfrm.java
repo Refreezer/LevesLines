@@ -5,9 +5,11 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
 public class Jfrm extends JFrame {
@@ -30,6 +32,7 @@ public class Jfrm extends JFrame {
 
     //запуск приложения
     public static void main(String[] args) {
+        ProcessBuilder pb = new ProcessBuilder("env\\Scripts\\activate.bat");
         EventQueue.invokeLater(() -> {
             try {
                 Jfrm frame = new Jfrm();
@@ -235,6 +238,27 @@ public class Jfrm extends JFrame {
     private void textFieldListener() {
         //удаляем начальные и конечные пробелы
         String str = textFieldForFunc.getText().trim();
+        Runnable buildLevelsRunnable;
+
+        Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread th, Throwable ex) {
+                ex.printStackTrace();
+                StringBuilder msg = new StringBuilder(ex.getMessage());
+                int cnt = 0;
+                for (int i = 0; i < msg.length(); i++) {
+                    cnt++;
+                    if(cnt == 50){
+                        while(msg.charAt(i) != ' ')
+                            i--;
+
+                        cnt = 0;
+                        msg.insert(i,"\n");
+                    }
+                }
+                JOptionPane.showMessageDialog(null, msg);
+            }
+        };
 
         //если строка пустая
         if (str.isEmpty()) {
@@ -245,53 +269,101 @@ public class Jfrm extends JFrame {
                 //если пользователь задал точку  градиента,
                 //то считаем градиент
                 if (!xTextfield.getText().isEmpty() && !yTextfield.getText().isEmpty()) {
-                    String gradResult = CustomGraph.grad(translatedFunction,
-                            Double.parseDouble(xTextfield.getText()),
-                            Double.parseDouble(yTextfield.getText()));
-                    //печатаем градиент
-                    textFieldForGrad.setText(gradResult);
+
+                    Thread gradThread = new Thread(() -> {
+                        String gradResult = null;
+                        try {
+                            gradResult = CustomGraph.grad(translatedFunction,
+                                    Double.parseDouble(xTextfield.getText()),
+                                    Double.parseDouble(yTextfield.getText()));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            JOptionPane.showMessageDialog(null, e.getMessage());
+                        }
+                        //печатаем градиент
+                        textFieldForGrad.setText(gradResult);
+                    });
+
+                    gradThread.setUncaughtExceptionHandler(h);
+                    gradThread.start();
 
                     //если задано направление - считаем производную
                     if (!xDirTextfield.getText().isEmpty() && !yDirTextfield.getText().isEmpty()) {
 
-                        String dirDeriative = CustomGraph.evaluateDirDerivative(translatedFunction,
-                                Double.parseDouble(xTextfield.getText()),
-                                Double.parseDouble(yTextfield.getText()),
-                                Double.parseDouble(xDirTextfield.getText()),
-                                Double.parseDouble(yDirTextfield.getText())).toString();
+                        Thread dirThread = new Thread(() -> {
+                            try {
+                                String dirDeriative = CustomGraph.evaluateDirDerivative(
+                                        translatedFunction,
+                                        Double.parseDouble(xTextfield.getText()),
+                                        Double.parseDouble(yTextfield.getText()),
+                                        Double.parseDouble(xDirTextfield.getText()),
+                                        Double.parseDouble(yDirTextfield.getText())
+                                ).toString();
+
+                                textFieldForDer.setText(dirDeriative);
+                            } catch (Exception e) {
+                                e.printStackTrace();JOptionPane.showMessageDialog(null, e.getMessage());
+                            }
+                        });
+                        dirThread.setUncaughtExceptionHandler(h);
+                        dirThread.start();
+
+
                         //печатаем производную по направлению
-                        textFieldForDer.setText(dirDeriative);
+
                         //строим линии уровня
-                        CustomGraph.buildLevelLines(translatedFunction,
-                                Double.parseDouble(xTextfield.getText()),
-                                Double.parseDouble(yTextfield.getText()),
-                                Double.parseDouble(xDirTextfield.getText()),
-                                Double.parseDouble(yDirTextfield.getText()));
+                        buildLevelsRunnable = () -> {
+                            try {
+                                CustomGraph.buildLevelLines(translatedFunction,
+                                        Double.parseDouble(xTextfield.getText()),
+                                        Double.parseDouble(yTextfield.getText()),
+                                        Double.parseDouble(xDirTextfield.getText()),
+                                        Double.parseDouble(yDirTextfield.getText()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                JOptionPane.showMessageDialog(null, e.getMessage());
+                            }
+                        };
                     } else {
                         //если не задано направление,
                         //то строим график
-                        CustomGraph.buildLevelLines(translatedFunction);
+                        buildLevelsRunnable = () -> {
+                            try {
+                                CustomGraph.buildLevelLines(translatedFunction);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        };
                     }
                 } else {
                     //если задана только функция
-                    CustomGraph.buildLevelLines(translatedFunction);
+                    buildLevelsRunnable = () -> {
+                        try {
+                            CustomGraph.buildLevelLines(translatedFunction);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    };
                 }
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(null, ex.getLocalizedMessage());
+                Thread linesThread = new Thread(buildLevelsRunnable);
+
+                linesThread.setUncaughtExceptionHandler(h);
+                linesThread.start();
+
+            } catch (IllegalArgumentException | ArithmeticException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
             } catch (Exception ex) {
 
                 List<String> arr = Arrays.stream(ex.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList());
                 StringBuilder msg = new StringBuilder();
-                for (String el :
-                        arr) {
+                for (String el : arr) {
                     msg.append(el).append("\n");
                 }
                 JOptionPane.showMessageDialog(
                         null, "Invalid input.\nAdd operations and\n parenthesis: " + str + msg
-                 );
-
-
+                );
             }
+
         }
     }
 }

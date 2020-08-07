@@ -1,15 +1,19 @@
 from numpy import *
 import sys
 import pylab
+import re
 
 func =sys.argv[1]
-
+func = re.sub(r'atan', 'arctan', func)
+func = re.sub(r'asin', 'arcsin', func)
+func = re.sub(r'acos', 'arccos', func)
+func = re.sub(r'asin', 'arcsin', func)
 
 x, y = mgrid[-20*pi:20*pi:500j, -20*pi:20*pi:500j]
 
 try:
     z = eval(func)
-except NameError as e:
+except (NameError, SyntaxError) as e:
     print('IllegalFunction', file=sys.stderr)
     exit(1)
 

@@ -129,20 +129,18 @@ public class CustomGraph {
     }
 
     //вычисление производной по направлению
-    public static Double evaluateDirDerivative(String func, Double x, Double y, Double xDir, Double yDir) throws IOException {
+    public static Double evaluateDirDerivative(String func,
+                                               Double x, Double y,
+                                               Double xDir, Double yDir) throws IOException, InterruptedException {
         //Составление формул для расчёта
         String xDerivative = partialDerivative(func, "x", "y");
         String yDerivative = partialDerivative(func, "y", "x");
 
         double xDerivativeValue = 0.;
         double yDerivativeValue = 0.;
-        try {
-            //Вычисление частных производных
-            xDerivativeValue = evaluate(xDerivative, x.toString(), y.toString());
-            yDerivativeValue = evaluate(yDerivative, y.toString(), x.toString());
-        } catch (Exception e) {
-            System.out.println("CustomGraph.evaluateDirDerivative :" + e.getLocalizedMessage());
-        }
+        //Вычисление частных производных
+        xDerivativeValue = evaluate(xDerivative, x.toString(), y.toString());
+        yDerivativeValue = evaluate(yDerivative, y.toString(), x.toString());
 
         //Вычисляем координаты вектора
         double xDirVec = xDir - x;
@@ -185,7 +183,10 @@ public class CustomGraph {
             System.out.println(exception.getLocalizedMessage());
         }
 
-        if (!errorConsumer.getOutput().isEmpty()) throw new IllegalArgumentException(func + "is unable to evaluate");
+        if (errorConsumer.getOutput().contains("ZeroDivisionError"))
+            throw new ArithmeticException(func + "is unable to evaluate : ZeroDivisionError in " + x + " " + y);
+        else if (errorConsumer.getOutput().contains("IllegalFunction"))
+            throw new IllegalArgumentException(func + "Invalid place of definition");
 
         return Double.parseDouble(inputConsumer.getOutput());
     }
@@ -218,9 +219,12 @@ public class CustomGraph {
         if (!errorConsumer.getOutput().isEmpty()) throw new IllegalArgumentException(func);
 
 
-        return inputConsumer.getOutput().replaceAll("\s", "");
+        return inputConsumer.getOutput().replace("\n", "");
 
 
     }
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        System.out.println(translation("log(sin(x), sqrt(y))"));
+    }
 }

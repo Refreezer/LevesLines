@@ -11,14 +11,13 @@ func = re.sub(r'\*\*', "#", func)
 func = re.sub(r'\*', "**", func)
 func = re.sub(r"\){1}?", ")*", func)
 func = re.sub(r'\*#', "#", func)
-func = re.sub(r'\*\)', ')', func)
 func = re.sub(r'\*{2,3}', "*", func)
 func = re.sub(r'#', " ** ", func)
 func = re.sub(r'(\*$|\s)', "", func)
 func = re.sub(r'\*/', "/", func)
 func = re.sub(r'\*\+', "+", func)
 func = re.sub(r'\*-', "-", func)
-func = re.sub(r'\*\)', ')', func)
+
 
 for entrance in re.findall(r'log\(.+\s?,', func):
     func = func[:func.index(entrance) + len(entrance) - 1] + ")/log(" + func[func.index(entrance) + len(entrance):]
@@ -37,10 +36,8 @@ for entrance in re.findall(r'actg\(\S+?\)', func):
     new_entrance = re.sub(r'actg', "pi/2 - atan", new_entrance)
     func = func[:func.index(entrance)] + "("+ new_entrance + ")" + func[func.index(entrance) + len(entrance):]
 
-
+func = re.sub(r'\*[)]', ')', func)
 func = re.sub(r'ctg', "1/tan", func)
-func = re.sub(r'atan', 'arctan', func)
-func = re.sub(r'asin', 'arcsin', func)
-func = re.sub(r'acos', 'arccos', func)
+
 
 print (func)

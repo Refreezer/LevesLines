@@ -10,5 +10,9 @@ except ValueError as e:
 
 try:
     print(eval(sys.argv[1]))
-except NameError as e:
+except (NameError, SyntaxError) as e:
     print('IllegalFunction', file=sys.stderr)
+except ZeroDivisionError as e:
+    print('ZeroDivisionError', file=sys.stderr)
+except ValueError as e:
+    print('math domain error IllegalFunction', file=sys.stderr)
