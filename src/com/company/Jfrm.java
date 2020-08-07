@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
 public class Jfrm extends JFrame {
@@ -149,7 +148,7 @@ public class Jfrm extends JFrame {
 
         //настройка кнопки Нарисовать
         JButton startDrawbutton = new JButton("Нарисовать!");
-        startDrawbutton.addActionListener(e -> textFieldListener());
+        startDrawbutton.addActionListener(e -> drawListener());
         startDrawbutton.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 16));
         startDrawbutton.setBounds(719, 12, 145, 23);
         mainCustomPanel.add(startDrawbutton);
@@ -235,7 +234,7 @@ public class Jfrm extends JFrame {
         }
     }
 
-    private void textFieldListener() {
+    private void drawListener() {
         //удаляем начальные и конечные пробелы
         String str = textFieldForFunc.getText().trim();
         Runnable buildLevelsRunnable;
