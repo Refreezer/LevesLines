@@ -31,7 +31,14 @@ public class Jfrm extends JFrame {
 
     //запуск приложения
     public static void main(String[] args) {
-        ProcessBuilder pb = new ProcessBuilder("env\\Scripts\\activate.bat");
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    new java.io.File(".\\env\\Scripts\\activate.bat").getCanonicalPath());
+            pb.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         EventQueue.invokeLater(() -> {
             try {
                 Jfrm frame = new Jfrm();
@@ -361,6 +368,7 @@ public class Jfrm extends JFrame {
                 JOptionPane.showMessageDialog(
                         null, "Invalid input.\nAdd operations and\n parenthesis: " + str + msg
                 );
+                JOptionPane.showMessageDialog(null, ex.getMessage());
             }
 
         }

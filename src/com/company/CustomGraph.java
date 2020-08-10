@@ -1,5 +1,6 @@
 package com.company;
 
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Array;
 
@@ -15,8 +16,8 @@ public class CustomGraph {
         //Создаём экземпляр класса для запуска сторонней программы
         //указываем, что надо запустить программу python
         //с параметрами python\\translation.py, func
-
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\translation.py",
+        String translationPythonPath = new File("python\\translation.py").getCanonicalPath();
+        ProcessBuilder pb = new ProcessBuilder("python", translationPythonPath,
                 func);
 
 
@@ -51,8 +52,8 @@ public class CustomGraph {
     //Метод запускает стороннюю питоновскую программу для изображения линий
     //Запуск аналогичен методу translation
     public static void buildLevelLines(String func) throws IOException {
-
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\levels.py",
+        String pythonLevelsPath = new File("python\\levels.py").getCanonicalPath();
+        ProcessBuilder pb = new ProcessBuilder("python", pythonLevelsPath,
                 func);
 
 
@@ -79,7 +80,8 @@ public class CustomGraph {
 
     //Второй метод - добавление к линиям уровня градиента и производной по направлению
     public static void buildLevelLines(String func, double x, double y, double xDir, double yDir) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\levels_with_grad.py",
+        String pythonLevelsPath = new File("python\\levels_with_grad.py").getCanonicalPath();
+        ProcessBuilder pb = new ProcessBuilder("python", pythonLevelsPath,
                 func,
                 Double.toString(x),
                 Double.toString(y),
@@ -164,7 +166,9 @@ public class CustomGraph {
 
     //метод вычисления значения переданной функции
     private static double evaluate(String func, String x, String y) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\eval.py", func, x, y);
+
+        String pythonEvalPath = new File("python\\eval.py").getCanonicalPath();
+        ProcessBuilder pb = new ProcessBuilder("python", pythonEvalPath, func, x, y);
 
         Process p = pb.start();
 
@@ -195,7 +199,9 @@ public class CustomGraph {
     private static String partialDerivative(String func, String paramToDiff, String param2) throws IOException {
 
         //запускаем питоновский код
-        ProcessBuilder pb = new ProcessBuilder("python", "python\\partial_derivative.py",
+        String partialDerivativePath = new File("python\\partial_derivative.py").getCanonicalPath();
+
+        ProcessBuilder pb = new ProcessBuilder("python", partialDerivativePath,
                 func, paramToDiff, param2);
 
 
